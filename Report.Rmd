@@ -1,0 +1,128 @@
+---
+title: "BCVA Initial Findings"
+author: "Dorcas Washington"
+date: "2/10/2021"
+output: html_document
+---
+
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Question 1: Is there an association between improved Best Corrected Visual Acuity (BCVA) denominator being 20 or better (meaning 20 or lower in the denominator) and English as a second language?
+
+Below we have a contingency of Post-Surgery BCVA ≤ 20 (yes or no) and English as second language (yes or no).
+
+```{r Q_1, include=TRUE, echo=FALSE, warning=FALSE, message=FALSE, results='asis'}
+data <- read.csv(file = '12780KellyImplicatio_DATA_2021-01-27_1452.csv', header=TRUE)
+
+######################################################################################
+# English as second language summary stats 
+######################################################################################
+
+library(dplyr)
+
+data_lang_count <- data %>% count(preferred_language)
+
+data$English <- factor(ifelse(data$preferred_language == 'English', 'Y', 'N'))
+
+data_lang_binary <- data %>% group_by(English) %>% count(English)
+
+data$postop_bcva_denominator <- ifelse(data$postop_bcva_denominator == '20(CC)', "20", data$postop_bcva_denominator)
+data$postop_bcva_denominator <- as.numeric(ifelse(data$postop_bcva_denominator == "", NA, data$postop_bcva_denominator))
+data$`BCVA 20 or better` <- as.factor(ifelse(data$postop_bcva_denominator <= 20, 'Y', 'N'))
+
+Q_1 <- xtabs(~English + `BCVA 20 or better`, data)
+
+row.names(Q_1) <- c('Diminished BCVA', 'Improved BCVA')
+library(knitr)
+kable(Q_1, row.names=TRUE, align='l', col.names = c('English-No', 'English-Yes'))
+```
+Next, we performed a Chi-Square test to see if there is a relationship between the two variables (English as Second language and Improved BCVA). Our null hypothesis is there exist no relationship between the variables and our alternative hypothesis is there exist as association between the two variables. 
+
+```{r A_1, include=TRUE, echo=FALSE, warnings=FALSE}
+A_1 <- chisq.test(Q_1)
+A_1
+```
+
+Since we got a p-value= 0.3153 > 0.1 we fail to reject our null hypothesis that there exist a relationship between the two variables.
+
+# Question 2: Is there an association between improved Best Corrected Visual Acuity (BCVA) denominator being 25 or better (meaning 25 or lower in the denominator) and English as a second language?
+
+Below we have a contingency of Post-Surgery BCVA ≤ 25 (yes or no) and English as second language (yes or no).
+
+
+```{r Q_2, include=TRUE, echo=FALSE, warning=FALSE, message=FALSE, results='asis'}
+
+data$bcva_25_or_better <- as.factor(ifelse(data$postop_bcva_denominator <= 25, 'Y', 'N'))
+
+Q_2 <- xtabs(~English + bcva_25_or_better, data)
+kable(Q_2, row.names=TRUE, align='l', col.names = c('English-No', 'English-Yes'))
+
+
+```
+
+Next, once again we performed a Chi-Square test to see if there is a relationship between the two variables (English as Second language and Improved BCVA). Our null hypothesis is there exist no relationship between the variables and our alternative hypothesis is there exist as association between the two variables. 
+
+```{r A_2, include=TRUE, echo=FALSE, warnings=FALSE}
+A_2 <- chisq.test(Q_2)
+A_2
+```
+
+
+# Question 3: Is there an association between improved Best Corrected Visual Acuity (BCVA) denominator being 30 or better (meaning 30 or lower in the denominator) and English as a second language?
+
+Below we have a contingency of Post-Surgery BCVA ≤ 30 (yes or no) and English as second language (yes or no).
+
+```{r Q_3, include=TRUE, echo=FALSE, warnings=FALSE}
+data$bcva_30_or_better <- as.factor(ifelse(data$postop_bcva_denominator <= 30, 'Y', 'N'))
+Q_3 <- xtabs(~English + bcva_30_or_better, data)
+kable(Q_3, row.names=TRUE, align='l', col.names = c('English-No', 'English-Yes'))
+```
+
+Since there exists a cell (English-No and Improved-No) with less than 5 participants in that category, we must use the Fisher Exact Test because "the method of approximation used to calculate the chi-square becomes unreliable and risks either a type I or type II error" (https://www.saem.org/cdem/education/blogs/cdem-voice/cdem-voice/2018/12/17/cdem-voice---research-column---choosing-wisely-chi-square-vs.-fisher-s-exact). Below we have the results of the Fisher Exact Test. 
+
+```{r, A_3, include=TRUE, echo=FALSE, warnings=FALSE}
+
+A_3 <- fisher.test(Q_3, alternative="two.sided")
+A_3
+
+```
+With a Fisher's Exact test we get an odds ratio which "a measure of association between exposure and an outcome" (https://psychscenehub.com/psychpedia/odds-ratio-2/). In this case it would represent the odds that an outcome (improved BCVA) will occur given a particular exposure (English as a second language). An, OR (odds ratio) of > 1  "indicates increased occurrence of an event" (https://psychscenehub.com/psychpedia/odds-ratio-2/). But, if we look at p-value = 0.7432, it is greater than 0.1 so not statistically signficiant. 
+
+# Question 4:	Was there a difference in how many people reached a suboptimal outcome of best corrected visual acuity of 20/30 or greater after cataract surgery based on language preference?
+
+Below we have a contingency of Post-Surgery BCVA ≤ 40 (yes or no) and English as second language (yes or no).
+
+
+```{r Q_4, include=TRUE, echo=FALSE, warnings=FALSE}
+data$bcva_40_or_better <- as.factor(ifelse(data$postop_bcva_denominator <= 40, 'Y', 'N'))
+Q_4 <- xtabs(~English + bcva_40_or_better, data)
+kable(Q_4, row.names=TRUE, align='l', col.names = c('English-No', 'English-Yes'))
+
+
+```
+
+
+Once again, we have a group that has less than 5 patients in that cateorgy so we must use Fisher's Exact test. 
+
+```{r, A_4, include=TRUE, echo=FALSE, warnings=FALSE}
+A_4 <- fisher.test(Q_4, alternative="two.sided")
+A_4
+```
+
+We get an OR of 0.6781, and a p-value $\approx$ 1 >> 0.1. Therefore, there was not a difference in how many people reached a suboptimal outcome of best corrected visual acuity of 20/30 or greater after cataract surgery based on language preference. 
+
+# Question 5:	Was there a difference in post-operative best corrected visual acuity mean between the two groups? 
+
+We will use an unbalanced t-test 
+
+```{r}
+kable(group_means_by_lang, row.names=TRUE, align='l')
+
+```
+
